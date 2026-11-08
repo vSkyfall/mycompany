@@ -1,0 +1,228 @@
+![A Şirketi](../../docs/kapak.png)
+
+# A Şirketi
+
+Üç Claude Code ajanı, bir bekçi, bir dağıtıcı — kapalı bir döngü. Telefonundan bota bir link atarsın;
+bir ajan iddiaları kaynağına kadar doğrular, zincir devralır, yayına hazır bir paket çıkar ve orada durur:
+**yayın düğmesi insanda.**
+
+Bu bir iskelettir, bir ürün değil. Klonla, `.env`'i doldur, kendi takımlarını yaz.
+
+![Üç ajan ve bekçi](../../docs/4-ajan.png)
+
+## Videolar
+
+Her bölümün kodu kendi etiketinde durur; `main` en güncel hâl.
+
+- Bölüm 1 — [Şirketimde 13 Ajan Var, Maaş Ödemiyorum: Sıfırdan Kurulum](https://www.youtube.com/watch?v=7XhX8P0ebEU) · kod o videodaki haliyle: [`bolum-1`](https://github.com/selmakcby/a-sirketi/tree/bolum-1)
+- Bölüm 2 — [Bir Ajan Nasıl Uyanır ve Ne Kadar Harcar? Şirketimin İçi](https://youtu.be/OhnKe-L5-lU) · kod: [`bolum-2`](https://github.com/selmakcby/a-sirketi/tree/bolum-2) — bu repodaki dosyalar tek tek açılıyor, YouTube ajanı Telegram'dan çalıştırılıyor, 40 cent'lik hata kamerada teşhis ediliyor.
+- Higgsfield API ile 3D ajan ofisi → [docs/higgsfield-ofis/](../../docs/higgsfield-ofis/)
+
+## Üç takım
+
+| Takım | Anahtar | Akan şey |
+|---|---|---|
+| **x-icerik** | `TELEGRAM_BOT_TOKEN` · `TELEGRAM_CHAT_ID` | Telegram'a attığın X linki → `gelen/*.json` → her iddia ✅/🟡/⛔ etiketli doğrulama tablosu + "yazıya değer mi" kararı (`cikti/YYYY-MM-DD-<update_id>-<hesap>.md`) |
+| **youtube-analiz** | `APIFY_TOKEN` · `KANAL` | Apify aktörleri → `veri/YYYY-Www.json` → yalnız o dosyadaki sayılarla kaynaklı haftalık rapor (`cikti/YYYY-Www-rapor.md`) |
+| **twitter-icerik** | — (`FAL_KEY` varsa kapak) | Dağıtıcının düşürdüğü `aci-<id>` maddesi → X Article paketi: `article.md`, `article.html`, `kapak.png` (`cikti/<tarih>-<slug>/`) |
+
+Her takım `takimlar/<takim>/` altında aynı dört dosyayla yaşar: `takim.md` (kim ve ne yapar),
+`kurallar.md` (neye göre), `defter.md` (ne öğrendi), `durum.json` (nerede). Her ajan koşuya aynı
+sırayla başlar: `ANAYASA.md` → `sirket/AJAN-KIMLIGI.md` → `takimlar/<takim>/kurallar.md` →
+`takim.md` → yetenekleri (`skills/<ad>/SKILL.md`).
+
+## Döngü
+
+```
+   sen                                bin/telegram_dinle.py
+  Telegram'a X linki  ───────────────►  (long-poll; mesaj düştüğü an)
+                                                  │
+                                       gelen/*.json + kuyruk: x-<update_id>
+                                                  │  mesai içiyse hemen koştur
+                                                  │  (dışındaysa sabah dağıtıcı alır)
+                                      ┌───────────▼───────────┐
+                                      │  bin/kos.py x-icerik  │
+                                      │  claude -p (sonnet)   │
+                                      │  tweet_cek + arama    │
+                                      │  ✅/🟡/⛔ tablosu      │
+                                      └───────────┬───────────┘
+                                                  │ Stop hook
+                                      ┌───────────▼───────────┐
+                                      │  bin/bekci.py         │
+                                      │  ön kontrol (LLM yok) │
+                                      │  + ayrı kafa denetimi │
+                                      └─────┬───────────┬─────┘
+                                       red  │           │ kabul
+                                   düzeltmeye           │
+                                    (en fazla 2)        ▼
+                                                  durum.json
+                                             kuyruk: x-<id> tamam
+                                                        │
+                                          bin/dagitici.py — zincir
+                                                        │
+                            twitter-icerik kuyruğu: aci-<id> bekliyor
+                                                        │
+                    tavanlar: mesai 09:00-23:00 · koşu 2 USD / 15 dk ·
+                    takım günde 4 koşu · şirket günde 10 USD (bin/ayar.py)
+                                                        │
+                                      bin/kos.py twitter-icerik
+                                                        │
+                                    cikti/<tarih>-<slug>/article.html
+                                                        │
+                                                       sen
+                                                 (yayın düğmesi)
+```
+
+`youtube-analiz` aynı iskelette ayrı kulvarda döner: pazartesi sabahı `bin/gunluk.py --sabah`
+kuyruğa `yt-<hafta>` maddesini düşürür → Apify → `veri/*.json` → kaynaklı rapor.
+
+Aynı takımı **Telegram'dan da çağırabilirsin**: bota "youtube analizi yap" yazman yeter.
+Dinleyici gelen mesajı `takim_sec()` ile yönlendirir — içinde "youtube" geçen her mesaj
+(büyük/küçük harf farketmez, link olsun olmasın) `youtube-analiz` kuyruğuna `yt-<update_id>`
+maddesi düşürür ve mesai içindeysen pazartesiyi beklemeden hemen koşturur; takım o durumda
+veriyi tazeliğine bakmadan yeniden çeker ve raporu baştan yazar. "youtube" geçmeyen ama link
+taşıyan mesaj eskisi gibi `x-icerik`'e gider; ikisi de değilse hiçbir şey koşmaz. Ayrıntı:
+[docs/02-dongu.md](../../docs/02-dongu.md).
+
+## Kurulum — 6 adım
+
+Komut komut ayrıntılı hâli: **[KURULUM.md](../../KURULUM.md)**
+
+1. `git clone … && cd a-sirketi` · `cp .env.example .env` — anahtarları doldur (aşağıdaki tablo)
+2. `python3 bin/ayar.py` ve `python3 -m unittest discover -s tests` — iskelet ayakta mı
+3. `ANAYASA.md`'yi oku — beş madde, şirketin değişmez çerçevesi; istersen kendi maddelerini yaz
+4. Takımları tanı (`takimlar/*/takim.md`), sonra `python3 bin/agents_uret.py` ile
+   `.claude/agents/<takim>.md` dosyalarını üret
+5. Döngüyü kapat: `python3 bin/kos.py x-icerik --kuru` → Telegram'a link →
+   `python3 bin/telegram_oku.py --isle` → `python3 bin/kos.py x-icerik` → `python3 bin/dagitici.py`
+6. Sürekli çalıştır: `python3 bin/telegram_dinle.py` (olay tetiği) + `python3 bin/zamanla.py --kur` (sabah/akşam)
+
+## Anahtarlar (`.env`)
+
+`.env.example`'ı kopyalayıp doldurursun; `.env` `.gitignore`'un ilk satırındadır, git'e girmez.
+
+| Anahtar | Ne için | Yoksa ne olur |
+|---|---|---|
+| `TELEGRAM_BOT_TOKEN` | Bot gelen kutusu (@BotFather) | `x-icerik` koşmaz, "eksik anahtar" der |
+| `TELEGRAM_CHAT_ID` | Yalnızca senin mesajların işlensin | aynı |
+| `APIFY_TOKEN` | YouTube videoları + yorumları | `youtube-analiz` koşmaz |
+| `FAL_KEY` | 3840×736 kapak görseli | pakete "kapak: sen ekleyeceksin" notu düşer, koşu devam eder |
+| `OPENAI_API_KEY` | Bekçi — ayrı model ailesi (ANAYASA §3) | **yoksa ya da geçersizse** (401/403, ağ yok) yedek yol `claude -p --model haiku`; karar "bekçi aynı aileden — uyarı" notuyla kaydedilir |
+| `KANAL` | İzlenecek YouTube kanalı | `@ornek-kanal` varsayılır |
+| `NVIDIA_API_KEY` | Ajanı Anthropic yerine NVIDIA'nın bedava modeliyle koşturmak ([docs/07](../../docs/07-farkli-model.md)) | hiçbir şey değişmez; her takım Anthropic'te koşar |
+| `NIM_MODEL` | Koşacak NIM modeli (tool-use desteklemeli) | `takim.md`'deki `model:` satırı kullanılır; o da yoksa `saglayici: nim` koşusu atlanır |
+
+## Komutlar
+
+```bash
+python3 bin/ayar.py                          # mesai penceresi, tavanlar, kanal, .env var mı
+python3 bin/agents_uret.py [--check]         # takim.md → .claude/agents/<takim>.md (--check: sapma varsa 1)
+python3 bin/kos.py <takim>                   # bir takımı bir kez koştur
+python3 bin/kos.py <takim> --kuru            # claude çağırmadan akışı ve kurulan istemi bas
+python3 bin/kos.py <takim> --zorla           # mesai dışında elle koştur
+python3 bin/dagitici.py --kuru               # zinciri ve tetik kararlarını bas, hiçbir şey başlatma
+python3 bin/dagitici.py                      # zinciri kur, uygun takımları koştur
+python3 bin/bekci.py --dogrudan <takim> [kosu.md]   # hook dışından denetle, kararı JSON bas
+python3 bin/telegram_oku.py --chat-id-bul | --son 5 | --isle
+python3 bin/telegram_dinle.py [--bir-kez]    # olay tetiği: mesaj düştüğü an ilgili takım koşar
+python3 bin/gunluk.py --sabah [--kuru] | --aksam    # sabah dağıtıcı + rapor, akşam denetim
+python3 bin/zamanla.py --kuru | --kur | --durum | --kaldir   # launchd tetikleri (macOS)
+#   saatli tetik: macOS launchd · Linux cron (docs/02-dongu.md) · Windows WSL — kos.py POSIX fcntl kilidi kullanır
+python3 bin/tweet_cek.py <x-linki>
+python3 bin/youtube_analiz_cek.py --son-7g --yorum 50
+python3 bin/kapak_uret.py "<başlık>" cikti/kapak.png
+bin/takim-olustur.sh <yeni-takim>            # iskeletten yeni takım (dört dosya)
+python3 -m unittest discover -s tests        # reponun kendi testleri
+```
+
+## Neden böyle
+
+- **Ajan kim olduğunu bilir.** Koşu isteminin ve `.claude/agents/<takim>.md` dosyasının ilk satırı
+  şudur: "Sen `x-icerik` ajanısın. A Şirketi'nde bir çalışansın ve bir yapay zekâ ajanısın.
+  Mesleğin: …" — meslek `takim.md`'deki `description` alanıdır. Gerisini `sirket/AJAN-KIMLIGI.md`
+  anlatır: hafızası yok, patron kim, bekçi kim, dağıtıcı ne yapar, neyi asla yapmaz.
+- **Yetenek dosyaları.** Bir işin nasıl yapılacağı her koşuda baştan anlatılmaz; `skills/<ad>/SKILL.md`
+  bir kez yazılır, ajan **sadece ilgili adımda** okur. Hangi takımın hangi yeteneği var:
+  `takim.md` frontmatter'ındaki `skills: [...]` alanı; katalog `sirket/YETENEKLER.md`.
+  Her yeteneğin sonunda `## Öğrenilenler` var — ajan koşuda aldığı veriyle kendini geliştirir.
+- **Tek iskelet.** Dört dosya her takımda aynı yerde; yeni takım açmak `bin/takim-olustur.sh` ile
+  kopyala-yapıştır.
+- **Kural dosyada, kodda değil.** Ne yapılacağı `takim.md`'de, neye göre yapılacağı `kurallar.md`'de,
+  zincir `bin/dagitici.py`'deki `ZINCIR` tablosunda. Kod yalnızca sürücüdür.
+- **Bekçi ayrı süreçte.** Üretenin kendi kendini onaylaması yasak. Denetim Stop hook'ta, ayrı süreçte,
+  tercihen ayrı model ailesinde. İlk katman LLM'siz ön kontroldür: koşu kaydında anahtar, token ya da
+  e-posta deseni varsa karar doğrudan `red`.
+- **Tetik saat değil, olay.** Takımı başlatan şey bir zamanlayıcı değil, bota düşen mesaj
+  (`bin/telegram_dinle.py`) — hangi takım olduğunu mesajın kendisi söyler. Saatli tetik yalnız
+  sabah dağıtıcıyı ve akşam denetimi koşturur.
+- **Tavan her yerde.** Para, süre, koşu sayısı ve mesai penceresi tek dosyada (`bin/ayar.py`);
+  tavana çarpan koşu sessiz ölmez, `durum.json`'a yazar.
+- **Yayın insanda.** Şirket taslağa kadar gider, orada durur.
+
+## Ofis (Cubicle)
+
+Şirket [Cubicle](https://github.com/caglarutkuguler/cubicle)'ın piksel ofisinde canlı görünür: her
+takım bir çalışan, bekçi ayrı bir çalışan. `bin/ofis.py` beslemeyi `~/.cubicle/a-sirketi.json`'a
+yazar; her `durum.json` yazımı, koşu başı/sonu ve bekçi denetimi onu tazeler, `claude -p`
+koşusundaki her araç adımı da karttaki "son adımlar"a düşer.
+
+| Şirkette | Ofiste |
+|---|---|
+| koşu sürüyor | masada yazıyor, balonda kuyruktaki iş |
+| son halka `tamam` (`twitter-icerik`, `youtube-analiz`) | el kaldırır: "hazır, yayın düğmesi sende" |
+| zincir halkası `tamam` (`x-icerik`) | molaya gider, iş dağıtıcıyla sonraki takıma geçer |
+| `red` / `hata` | masaya yığılır, kartta bekçinin gerekçesi |
+| `atlandi` | "zZ", kartta sebep (mesai dışı, tavan, eksik anahtar) |
+
+Şirketin kendi ofis haritası da var: `python3 bin/ofis_sunucu.py` → http://127.0.0.1:3210.
+Koyu adacıklar üstünde boyalı binalar (`ofis/gorseller/`, Codex'in görsel üretimiyle), robotlar
+(`docs/4-ajan.png`), kesik çizgili yollar; koşan takımın üstünde o anki araç adımı, bekçi denetlediği
+takıma yürür, hazır paketi olan robot yayın masasına gelip el kaldırır. Sağ panelden takıma iş verilir
+(`not-…` kuyruk maddesi) ya da koşu başlatılır (`bin/kos.py`; mesai ve tavanlar geçerli). Sunucu yalnız
+127.0.0.1'e bağlanır, yazma isteklerini yalnız kendi sayfasından kabul eder. Cubicle beslemesindeki
+`view` alanı sayesinde Cubicle menüsünden şirket (`OFIS_SIRKET_ADI`, varsayılan mycompany) seçilince bu
+harita açılır. Sağda patronun özel alanı var: genel merkez, yayın masası ve patron; hazır paketi olan
+robotlar masanın önünde sıraya girer. 8×3'lük bir robot koleksiyonu `ofis/gorseller/robot-koleksiyonu.png`
+ya da reponun bir üst klasörüne konursa dağıtıcı ve Telegram kulesine süs robotları yerleşir.
+
+```bash
+python3 bin/ofis.py                       # beslemeyi yeniden yaz, özet bas
+python3 bin/ofis.py --gordum twitter-icerik   # paketi aldın: "yayın sende" eli iner
+```
+
+Şirket koşuları `--setting-sources project,local` ile koşar: kullanıcı düzeyindeki kancalar
+(genel Cubicle kancası dahil) yüklenmez, koşu ofiste iki kez görünmez. Ofis bir göstergedir;
+yazamazsa sessiz geçer, şirketin işini durdurmaz. `OFIS_KAPALI=1` tamamen kapatır.
+
+## Ekip: CEO ve 12 ajan
+
+İçerik takımlarının yanında genel amaçlı bir ekip var (`sirket/ekip.json`): CEO **Fable 5.1** ve üç
+aileden 12 ajan — Claude (`claude -p`), Antigravity (`agy`, delege betiğiyle) ve Codex (`codex exec`).
+
+- `bin/ceo.py "iş"` — Fable başsız koşar; işi böler, yalnız `bin/ekip.py` ile dağıtır, çıktıları
+  doğrular, raporu `sirket-log/ceo/<zaman>/rapor.md`'ye yazar. Para tavanı yok (abonelik yettiği
+  sürece), süre tavanı `ayar.KOSU_SURESI_SN`. İçerik takımlarının tavanı ANAYASA §4'te, ona dokunulmadı.
+- `bin/ekip.py ver <ajan> --brif "…"` — doğru CLI'ı çağırır, sonucu tek satır JSON basar, brif ve
+  yanıtı `sirket-log/ekip/` altına kaydeder. Varsayılan salt-okunur; `--yaz` yalnız patron izin
+  verdiğinde (`MYCOMPANY_YAZMA=1`, `ceo.py --yazabilir`).
+- Ofiste: haritanın altındaki ekip salonu (arka Codex, orta Antigravity, ön Claude, önde Fable).
+  Çalışan ajanın masası yanar, Fable'dan masaya zarf uçar; rapor hazır olunca Fable el kaldırır.
+
+## Belgeler
+
+| Dosya | Ne anlatır |
+|---|---|
+| [docs/01-nasil-calisir.md](../../docs/01-nasil-calisir.md) | Mimari: dört dosya, okuma sırası, `bin/kos.py` ne yapar |
+| [docs/02-dongu.md](../../docs/02-dongu.md) | Tetikler, dağıtıcı ve zincir, tavanlar |
+| [docs/03-bekci.md](../../docs/03-bekci.md) | Bekçi: ön kontrol, ayrı kafa, red akışı |
+| [docs/04-yetenekler.md](../../docs/04-yetenekler.md) | `skills/` — ne, neden, nasıl bağlanır |
+| [docs/05-yeni-takim.md](../../docs/05-yeni-takim.md) | Sıfırdan yeni takım açmak |
+| [docs/06-sorun-giderme.md](../../docs/06-sorun-giderme.md) | Sık çıkan hatalar ve okunacak dosya |
+| [docs/07-farkli-model.md](../../docs/07-farkli-model.md) | Ajanı Anthropic yerine NVIDIA'nın bedava modeliyle koşturmak (+ güvenlik notu) |
+| [docs/ornek-kosu/](../../docs/ornek-kosu/) | Gerçek bir koşunun kaydı ve çıktısı |
+| [prompts/](../../prompts/) | Şirketi sıfırdan kurmak için Claude Code'a sırayla verilen prompt'lar (P0–P12) |
+| [ANAYASA.md](../../ANAYASA.md) | Beş madde: şirketin değişmez çerçevesi |
+
+## Lisans
+
+MIT — bkz. [LICENSE](../../LICENSE).

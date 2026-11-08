@@ -1,0 +1,26 @@
+{
+  "_not": "mycompany ekibi. CEO işi böler ve bin/ekip.py ile dağıtır. model: CLI'ın tam model adı; null = o CLI'ın hesaptaki varsayılanı. Roller ~/.claude/skills/delegate/SKILL.md'deki rol tablosundan.",
+  "ceo": {
+    "id": "fable", "ad": "Fable 5.1", "aile": "claude", "model": "claude-fable-5-1",
+    "rol": "CEO — patronun işini anlar, böler, ajanlara dağıtır, çıktıları doğrular ve tek rapor yazar"
+  },
+  "aileler": {
+    "claude":      { "ad": "Claude",      "renk": "#e8875b", "kota": "Claude aboneliği — kaliteye saklanır" },
+    "antigravity": { "ad": "Antigravity", "renk": "#6ea8ff", "kota": "Google AI Pro — hacimli ve bağımsız işler buraya" },
+    "codex":       { "ad": "Codex",       "renk": "#7fe0c3", "kota": "OpenAI Go — kota düşük, yalnız OpenAI görüşü gerektiğinde" }
+  },
+  "ajanlar": [
+    { "id": "claude-opus",      "ad": "Opus 5.5",         "aile": "claude",      "model": "claude-opus-5-5",          "rol": "Mimar / zor iş: plan, mimari, zor hata, güvenlik, kullanıcıya görünen arayüz ve metin" },
+    { "id": "claude-sonnet",    "ad": "Sonnet 5.5",       "aile": "claude",      "model": "claude-sonnet-5-5",        "rol": "Uygulayıcı: net tanımlı kod işi, bileşen, fonksiyon, test, refactor" },
+    { "id": "claude-haiku",     "ad": "Haiku 5.5",        "aile": "claude",      "model": "claude-haiku-5-5",         "rol": "Kâşif / hızlı işçi: kod tabanında arama, özet, sınıflandırma" },
+    { "id": "agy-opus",         "ad": "Opus 5.5",         "aile": "antigravity", "model": "claude-opus-5-5-high",     "rol": "Mimar (Google kotasından): plan ve zor iş için yedek" },
+    { "id": "agy-sonnet",       "ad": "Sonnet 5.5",       "aile": "antigravity", "model": "claude-sonnet-5-5-medium", "rol": "Uygulayıcı (Google kotasından): bağımsız, net tanımlı iş" },
+    { "id": "agy-gpt-oss",      "ad": "GPT-OSS 120B",     "aile": "antigravity", "model": "gpt-oss-120b-medium",      "rol": "Açık model: ikinci görüş, basit dönüşüm ve taslak" },
+    { "id": "agy-gemini-flash", "ad": "Gemini 3.8 Flash", "aile": "antigravity", "model": "gemini-3.8-flash-low",     "rol": "Hızlı işçi: çok sayıda küçük iş, özet, çeviri, sınıflandırma" },
+    { "id": "agy-gemini-argon", "ad": "Gemini 4 Argon",   "aile": "antigravity", "model": "gemini-4-argon-high",      "rol": "Araştırmacı / denetçi: büyük doküman ve log analizi, web araştırması, başka aileden bağımsız inceleme" },
+    { "id": "codex-luna-56",    "ad": "GPT-5.6 Luna",     "aile": "codex",       "model": "gpt-5.6-luna",             "rol": "Hızlı ve ucuz OpenAI görüşü" },
+    { "id": "codex-terra-56",   "ad": "GPT-5.6 Terra",    "aile": "codex",       "model": "gpt-5.6-terra",            "rol": "Dengeli OpenAI uygulayıcısı" },
+    { "id": "codex-6-luna",     "ad": "GPT-6 Luna",       "aile": "codex",       "model": "gpt-6-luna",               "rol": "OpenAI denetçi: başka aileden kod incelemesi ve plan eleştirisi" },
+    { "id": "chatgpt",          "ad": "ChatGPT",          "aile": "codex",       "model": null,                       "rol": "Codex'in hesaptaki varsayılan modeli: genel soru, metin, fikir" }
+  ]
+}

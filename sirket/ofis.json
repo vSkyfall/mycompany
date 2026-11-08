@@ -1,0 +1,4 @@
+{
+  "_not": "Ofis görünümü ayarları. icerik_takimlari: Telegram/X/YouTube içerik köyü (API anahtarı ister). false iken haritada ve Cubicle beslemesinde görünmez; takımlar ve kodları yerinde durur.",
+  "icerik_takimlari": false
+}

@@ -1,0 +1,16 @@
+.env
+.kos.lock
+.kos-*.lock
+.ceo.lock
+__pycache__/
+*.pyc
+*.jsonl
+sirket-log/
+takimlar/*/kosu/
+takimlar/*/cikti/
+takimlar/*/gelen/
+takimlar/*/veri/
+.obsidian/
+*.canvas
+.DS_Store
+sirket/model-proxy/
